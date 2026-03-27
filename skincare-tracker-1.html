@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LUMIÈRE by Windy — Skincare Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@200;300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black: #080808;
+      --deep: #0e0e0e;
+      --card: #131313;
+      --border: rgba(255,255,255,0.07);
+      --gold: #c9a96e;
+      --gold-light: #e8cc99;
+      --white: #f5f0ea;
+      --muted: rgba(245,240,234,0.45);
+      --glow: rgba(201,169,110,0.12);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 300;
+      min-height: 100vh;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* Custom Cursor */
+    .cursor {
+      width: 10px; height: 10px;
+      background: var(--gold);
+      border-radius: 50%;
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      transition: transform 0.15s ease;
+      transform: translate(-50%, -50%);
+    }
+    .cursor-ring {
+      width: 36px; height: 36px;
+      border: 1px solid rgba(201,169,110,0.5);
+      border-radius: 50%;
+      position: fixed;
+      pointer-events: none;
+      z-index: 9998;
+      transition: all 0.25s ease;
+      transform: translate(-50%, -50%);
+    }
+
+    /* Grain overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.6;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 24px 48px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      background: rgba(8,8,8,0.85);
+      backdrop-filter: blur(20px);
+    }
+    .logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      letter-spacing: 0.3em;
+      color: var(--gold);
+      font-weight: 300;
+    }
+    .logo span { font-style: italic; color: var(--white); }
+    .nav-tag {
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+      position: relative;
+    }
+    .hero-bg {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 60% 50% at 50% 40%, rgba(201,169,110,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-eyebrow {
+      font-size: 10px;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 28px;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.2s forwards;
+    }
+    .hero-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(52px, 9vw, 96px);
+      font-weight: 300;
+      line-height: 1.0;
+      letter-spacing: -0.01em;
+      margin-bottom: 12px;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.4s forwards;
+    }
+    .hero-title em {
+      font-style: italic;
+      color: var(--gold);
+    }
+    .hero-sub {
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-bottom: 52px;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.6s forwards;
+    }
+    .hero-cta {
+      display: inline-flex; align-items: center; gap: 12px;
+      padding: 14px 36px;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      background: transparent;
+      cursor: none;
+      transition: all 0.3s ease;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.8s forwards;
+    }
+    .hero-cta:hover {
+      background: var(--gold);
+      color: var(--black);
+    }
+    .hero-cta:hover .arrow { transform: translateX(4px); }
+    .arrow { transition: transform 0.3s ease; font-size: 14px; }
+
+    /* DIVIDER */
+    .divider {
+      display: flex; align-items: center; gap: 20px;
+      padding: 0 48px;
+      margin: 20px 0 60px;
+      opacity: 0;
+      animation: fadeUp 0.8s 1s forwards;
+    }
+    .divider-line { flex: 1; height: 1px; background: var(--border); }
+    .divider-icon { color: var(--gold); font-size: 12px; letter-spacing: 0.3em; }
+
+    /* MAIN TRACKER SECTION */
+    .tracker-section {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px 100px;
+    }
+
+    .section-label {
+      font-size: 10px;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 40px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* Date Strip */
+    .date-strip {
+      display: flex; gap: 8px;
+      margin-bottom: 40px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      scrollbar-width: none;
+    }
+    .date-strip::-webkit-scrollbar { display: none; }
+    .date-day {
+      flex: 0 0 auto;
+      width: 56px;
+      padding: 12px 8px;
+      text-align: center;
+      border: 1px solid var(--border);
+      background: var(--card);
+      cursor: none;
+      transition: all 0.25s;
+    }
+    .date-day:hover { border-color: rgba(201,169,110,0.3); }
+    .date-day.active {
+      border-color: var(--gold);
+      background: rgba(201,169,110,0.08);
+    }
+    .date-day .day-name { font-size: 9px; letter-spacing: 0.15em; color: var(--muted); text-transform: uppercase; }
+    .date-day .day-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 300;
+      color: var(--white);
+      line-height: 1.2;
+    }
+    .date-day.active .day-num { color: var(--gold); }
+    .date-day .dot {
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: var(--gold);
+      margin: 4px auto 0;
+      opacity: 0;
+    }
+    .date-day.has-log .dot { opacity: 1; }
+
+    /* Two-column layout */
+    .tracker-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 700px) { .tracker-grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s;
+    }
+    .card:hover { border-color: rgba(201,169,110,0.2); }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .card:hover::before { opacity: 1; }
+
+    .card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .card-icon {
+      width: 28px; height: 28px;
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px;
+    }
+
+    /* Routine Checklist */
+    .routine-list { display: flex; flex-direction: column; gap: 10px; }
+    .routine-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      cursor: none;
+      transition: all 0.2s;
+      background: transparent;
+    }
+    .routine-item:hover { border-color: rgba(201,169,110,0.25); background: rgba(201,169,110,0.03); }
+    .routine-item.checked { border-color: rgba(201,169,110,0.3); background: rgba(201,169,110,0.05); }
+    .routine-checkbox {
+      width: 16px; height: 16px;
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .routine-item.checked .routine-checkbox {
+      background: var(--gold);
+      border-color: var(--gold);
+    }
+    .routine-checkbox svg { display: none; }
+    .routine-item.checked .routine-checkbox svg { display: block; }
+    .routine-name { font-size: 12px; letter-spacing: 0.05em; flex: 1; }
+    .routine-item.checked .routine-name { color: var(--muted); text-decoration: line-through; text-decoration-color: rgba(201,169,110,0.4); }
+    .routine-step {
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      color: var(--gold);
+      opacity: 0.7;
+    }
+
+    /* Skin Condition */
+    .skin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .skin-btn {
+      padding: 10px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      cursor: none;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .skin-btn:hover { border-color: rgba(201,169,110,0.3); color: var(--white); }
+    .skin-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(201,169,110,0.06); }
+
+    /* Hydration tracker */
+    .hydration-bar {
+      display: flex; gap: 6px;
+      margin-top: 8px;
+    }
+    .hydration-glass {
+      flex: 1; height: 48px;
+      border: 1px solid var(--border);
+      cursor: none;
+      transition: all 0.25s;
+      position: relative;
+      overflow: hidden;
+    }
+    .hydration-glass::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 0%;
+      background: linear-gradient(to top, rgba(201,169,110,0.5), rgba(201,169,110,0.15));
+      transition: height 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .hydration-glass.filled::after { height: 100%; }
+    .hydration-glass:hover { border-color: rgba(201,169,110,0.4); }
+    .hydration-label {
+      font-size: 10px; letter-spacing: 0.15em; color: var(--muted);
+      margin-top: 8px;
+    }
+    #hydration-count {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 300;
+      color: var(--gold);
+    }
+
+    /* Products used today */
+    .product-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .product-tag {
+      padding: 5px 12px;
+      border: 1px solid var(--border);
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .product-tag .remove {
+      color: var(--gold); cursor: none; font-size: 12px;
+      opacity: 0.6; transition: opacity 0.2s;
+    }
+    .product-tag .remove:hover { opacity: 1; }
+    .add-product-row { display: flex; gap: 8px; }
+    .input-field {
+      flex: 1;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--white);
+      font-family: 'Outfit', sans-serif;
+      font-size: 12px;
+      padding: 9px 14px;
+      outline: none;
+      transition: border-color 0.2s;
+      letter-spacing: 0.05em;
+    }
+    .input-field::placeholder { color: rgba(245,240,234,0.2); }
+    .input-field:focus { border-color: rgba(201,169,110,0.4); }
+    .btn-add {
+      padding: 9px 16px;
+      background: transparent;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      cursor: none;
+      transition: all 0.2s;
+    }
+    .btn-add:hover { background: var(--gold); color: var(--black); }
+
+    /* Skin Notes */
+    .notes-area {
+      width: 100%;
+      min-height: 90px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--white);
+      font-family: 'Outfit', sans-serif;
+      font-size: 12px;
+      font-weight: 300;
+      padding: 14px;
+      outline: none;
+      resize: none;
+      letter-spacing: 0.04em;
+      line-height: 1.7;
+      transition: border-color 0.2s;
+    }
+    .notes-area::placeholder { color: rgba(245,240,234,0.2); }
+    .notes-area:focus { border-color: rgba(201,169,110,0.4); }
+
+    /* Progress / Skin Score */
+    .score-display {
+      display: flex; align-items: flex-end; gap: 6px;
+      margin-bottom: 16px;
+    }
+    .score-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 64px;
+      font-weight: 300;
+      line-height: 1;
+      color: var(--gold);
+    }
+    .score-denom { font-size: 14px; color: var(--muted); margin-bottom: 10px; }
+    .score-bar-wrap {
+      height: 2px;
+      background: rgba(255,255,255,0.06);
+      margin-bottom: 8px;
+      position: relative;
+    }
+    .score-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold), var(--gold-light));
+      transition: width 0.6s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .score-metrics { display: flex; justify-content: space-between; }
+    .score-metric { text-align: center; }
+    .score-metric .val {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px; color: var(--white); display: block;
+    }
+    .score-metric .lbl { font-size: 9px; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; }
+
+    /* Full width card */
+    .card-full { margin-bottom: 16px; }
+
+    /* Concern tags */
+    .concern-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .concern-tag {
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      color: var(--muted);
+      cursor: none;
+      transition: all 0.2s;
+      text-transform: uppercase;
+    }
+    .concern-tag:hover { border-color: rgba(201,169,110,0.3); color: var(--white); }
+    .concern-tag.active { border-color: var(--gold); color: var(--gold); background: rgba(201,169,110,0.06); }
+
+    /* Save button */
+    .save-row {
+      display: flex; justify-content: flex-end;
+      margin-top: 8px;
+    }
+    .btn-save {
+      padding: 14px 40px;
+      background: var(--gold);
+      border: none;
+      color: var(--black);
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      cursor: none;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-save::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: rgba(255,255,255,0.15);
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+    }
+    .btn-save:hover::before { transform: translateX(0); }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 40px; right: 40px;
+      padding: 14px 24px;
+      background: var(--card);
+      border: 1px solid var(--gold);
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      color: var(--gold);
+      z-index: 500;
+      transform: translateY(20px);
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+      pointer-events: none;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 48px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .footer-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px; color: var(--gold); letter-spacing: 0.3em;
+    }
+    .footer-copy { font-size: 10px; letter-spacing: 0.2em; color: var(--muted); }
+
+    /* Animations */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-in {
+      opacity: 0;
+      animation: fadeUp 0.7s forwards;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <!-- NAV -->
+  <nav>
+    <div class="logo">LUMIÈRE <span>by Windy</span></div>
+    <div class="nav-tag">Skincare Tracker ✦ Premium</div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-eyebrow">Your skin, your ritual</div>
+    <h1 class="hero-title">Track Your<br/><em>Glow Journey</em></h1>
+    <p class="hero-sub">Catat rutinitas kulitmu setiap hari — dengan elegan</p>
+    <button class="hero-cta" onclick="document.querySelector('.tracker-section').scrollIntoView({behavior:'smooth'})">
+      Mulai Hari Ini <span class="arrow">→</span>
+    </button>
+  </section>
+
+  <!-- TRACKER -->
+  <section class="tracker-section">
+    <div class="section-label fade-in">Daily Log</div>
+
+    <!-- Date Strip -->
+    <div class="date-strip fade-in" id="dateStrip"></div>
+
+    <!-- Row 1 -->
+    <div class="tracker-grid fade-in">
+
+      <!-- Morning Routine -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Morning Routine</div>
+          <div class="card-icon">☀️</div>
+        </div>
+        <div class="routine-list" id="morningList">
+          <div class="routine-item" onclick="toggleRoutine(this)">
+            <div class="routine-checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#080808" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="routine-name">Cleanser</span>
+            <span class="routine-step">Step 01</span>
+          </div>
+          <div class="routine-item" onclick="toggleRoutine(this)">
+            <div class="routine-checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#080808" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="routine-name">Toner</span>
+            <span class="routine-step">Step 02</span>
+          </div>
+          <div class="routine-item" onclick="toggleRoutine(this)">
+            <div class="routine-checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#080808" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="routine-name">Serum</span>
+            <span class="routine-step">Step 03</span>
+          </div>
+          <div class="routine-item" onclick="toggleRoutine(this)">
+            <div class="routine-checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#080808" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="routine-name">Moisturizer</span>
+            <span class="routine-step">Step 04</span>
+          </div>
+          <div class="routine-item" onclick="toggleRoutine(this)">
+            <div class="routine-checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#080808" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="routine-name">Sunscreen SPF</span>
+            <span class="routine-step">Step 05</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Night Routine -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Night Routine</div>
+          <div class="card-icon">🌙</div>
+        </div>
+        <div class="routine-list">
+          <div class="routine-item" onclick="toggleRoutine(this)">
+            <div class="routine-checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#080808" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="routine-name">Double Cleanse</span>
+            <span class="routine-step">Step 01</span>
+          </div>
+          <div class="routine-item" onclick="toggleRoutine(this)">
+            <div class="routine-checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#080808" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="routine-name">Exfoliator</span>
+            <span class="routine-step">Step 02</span>
+          </div>
+          <div class="routine-item" onclick="toggleRoutine(this)">
+            <div class="routine-checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#080808" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="routine-name">Essence / Toner</span>
+            <span class="routine-step">Step 03</span>
+          </div>
+          <div class="routine-item" onclick="toggleRoutine(this)">
+            <div class="routine-checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#080808" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="routine-name">Treatment Serum</span>
+            <span class="routine-step">Step 04</span>
+          </div>
+          <div class="routine-item" onclick="toggleRoutine(this)">
+            <div class="routine-checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#080808" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="routine-name">Night Cream</span>
+            <span class="routine-step">Step 05</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 2 -->
+    <div class="tracker-grid fade-in">
+
+      <!-- Skin Condition -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Kondisi Kulit Hari Ini</div>
+          <div class="card-icon">✦</div>
+        </div>
+        <div class="skin-grid">
+          <button class="skin-btn" onclick="toggleSkin(this)">✨ Glowing</button>
+          <button class="skin-btn" onclick="toggleSkin(this)">💧 Hydrated</button>
+          <button class="skin-btn" onclick="toggleSkin(this)">🔴 Breakout</button>
+          <button class="skin-btn" onclick="toggleSkin(this)">🌫️ Dull</button>
+          <button class="skin-btn" onclick="toggleSkin(this)">🌵 Dry / Flaky</button>
+          <button class="skin-btn" onclick="toggleSkin(this)">💦 Oily</button>
+          <button class="skin-btn" onclick="toggleSkin(this)">🌡️ Sensitive</button>
+          <button class="skin-btn" onclick="toggleSkin(this)">⚖️ Balanced</button>
+        </div>
+      </div>
+
+      <!-- Hydration -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Water Intake</div>
+          <div class="card-icon">💧</div>
+        </div>
+        <div style="display:flex; align-items:flex-end; gap:8px; margin-bottom:12px;">
+          <span id="hydration-count">0</span>
+          <span style="font-size:13px; color:var(--muted); margin-bottom:6px;">/ 8 glasses</span>
+        </div>
+        <div class="hydration-bar" id="hydrationBar">
+          <div class="hydration-glass" onclick="fillGlass(0)"></div>
+          <div class="hydration-glass" onclick="fillGlass(1)"></div>
+          <div class="hydration-glass" onclick="fillGlass(2)"></div>
+          <div class="hydration-glass" onclick="fillGlass(3)"></div>
+          <div class="hydration-glass" onclick="fillGlass(4)"></div>
+          <div class="hydration-glass" onclick="fillGlass(5)"></div>
+          <div class="hydration-glass" onclick="fillGlass(6)"></div>
+          <div class="hydration-glass" onclick="fillGlass(7)"></div>
+        </div>
+        <div class="hydration-label">Tap gelas untuk isi — hidrasi = kunci glow ✦</div>
+      </div>
+    </div>
+
+    <!-- Row 3 -->
+    <div class="tracker-grid fade-in">
+      <!-- Products -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Produk yang Dipakai</div>
+          <div class="card-icon">🧴</div>
+        </div>
+        <div class="product-tags" id="productTags">
+          <div class="product-tag">CeraVe Cleanser <span class="remove" onclick="removeTag(this)">×</span></div>
+          <div class="product-tag">Somethinc Niacinamide <span class="remove" onclick="removeTag(this)">×</span></div>
+        </div>
+        <div class="add-product-row">
+          <input class="input-field" id="productInput" placeholder="Nama produk..." onkeydown="if(event.key==='Enter') addProduct()" />
+          <button class="btn-add" onclick="addProduct()">+ ADD</button>
+        </div>
+      </div>
+
+      <!-- Skin Concerns -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Skin Concerns</div>
+          <div class="card-icon">◈</div>
+        </div>
+        <div class="concern-row">
+          <div class="concern-tag" onclick="toggleConcern(this)">Acne</div>
+          <div class="concern-tag" onclick="toggleConcern(this)">Dark Spots</div>
+          <div class="concern-tag" onclick="toggleConcern(this)">Pores</div>
+          <div class="concern-tag" onclick="toggleConcern(this)">Wrinkles</div>
+          <div class="concern-tag" onclick="toggleConcern(this)">Redness</div>
+          <div class="concern-tag" onclick="toggleConcern(this)">Pigmentation</div>
+          <div class="concern-tag" onclick="toggleConcern(this)">Texture</div>
+          <div class="concern-tag" onclick="toggleConcern(this)">Dark Circles</div>
+          <div class="concern-tag" onclick="toggleConcern(this)">Dryness</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes + Score -->
+    <div class="tracker-grid fade-in card-full">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Skin Journal</div>
+          <div class="card-icon">✍</div>
+        </div>
+        <textarea class="notes-area" placeholder="Bagaimana kulit kamu hari ini? Ada reaksi produk baru? Catat di sini..." id="skinNotes"></textarea>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Skin Score Hari Ini</div>
+          <div class="card-icon">◆</div>
+        </div>
+        <div class="score-display">
+          <div class="score-num" id="scoreNum">72</div>
+          <div class="score-denom">/ 100</div>
+        </div>
+        <div class="score-bar-wrap">
+          <div class="score-bar-fill" id="scoreBar" style="width: 72%"></div>
+        </div>
+        <div style="margin-bottom:20px;">
+          <input type="range" min="0" max="100" value="72" id="scoreSlider"
+            style="width:100%; accent-color: var(--gold); background: transparent; cursor:none;"
+            oninput="updateScore(this.value)" />
+        </div>
+        <div class="score-metrics">
+          <div class="score-metric">
+            <span class="val" id="streak">7</span>
+            <span class="lbl">Day Streak</span>
+          </div>
+          <div class="score-metric">
+            <span class="val" id="avgScore">68</span>
+            <span class="lbl">Avg Score</span>
+          </div>
+          <div class="score-metric">
+            <span class="val" id="bestScore">89</span>
+            <span class="lbl">Best Score</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Save -->
+    <div class="save-row fade-in">
+      <button class="btn-save" onclick="saveLog()">Simpan Log Hari Ini</button>
+    </div>
+
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-logo">LUMIÈRE by Windy</div>
+    <div class="footer-copy">✦ Your skin deserves intention ✦</div>
+  </footer>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">✦ Log berhasil disimpan</div>
+
+  <script>
+    // Cursor
+    const cursor = document.getElementById('cursor');
+    const ring = document.getElementById('cursorRing');
+    let mx = 0, my = 0, rx = 0, ry = 0;
+    document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; cursor.style.left = mx + 'px'; cursor.style.top = my + 'px'; });
+    function animateRing() {
+      rx += (mx - rx) * 0.12; ry += (my - ry) * 0.12;
+      ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+      requestAnimationFrame(animateRing);
+    }
+    animateRing();
+
+    // Date Strip
+    const strip = document.getElementById('dateStrip');
+    const days = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+    const today = new Date();
+    for (let i = -3; i <= 3; i++) {
+      const d = new Date(today); d.setDate(today.getDate() + i);
+      const el = document.createElement('div');
+      el.className = 'date-day' + (i === 0 ? ' active' : '') + (i < 0 ? ' has-log' : '');
+      el.innerHTML = `<div class="day-name">${days[d.getDay()]}</div><div class="day-num">${d.getDate()}</div><div class="dot"></div>`;
+      el.onclick = () => { document.querySelectorAll('.date-day').forEach(x => x.classList.remove('active')); el.classList.add('active'); };
+      strip.appendChild(el);
+    }
+
+    // Routine Toggle
+    function toggleRoutine(el) { el.classList.toggle('checked'); updateScore(); }
+
+    // Skin buttons
+    function toggleSkin(btn) { btn.classList.toggle('active'); }
+
+    // Concerns
+    function toggleConcern(el) { el.classList.toggle('active'); }
+
+    // Hydration
+    let glasses = 0;
+    function fillGlass(idx) {
+      const all = document.querySelectorAll('.hydration-glass');
+      if (all[idx].classList.contains('filled')) {
+        for (let i = idx; i < 8; i++) all[i].classList.remove('filled');
+      } else {
+        for (let i = 0; i <= idx; i++) all[i].classList.add('filled');
+      }
+      glasses = document.querySelectorAll('.hydration-glass.filled').length;
+      document.getElementById('hydration-count').textContent = glasses;
+    }
+
+    // Products
+    function addProduct() {
+      const inp = document.getElementById('productInput');
+      if (!inp.value.trim()) return;
+      const tag = document.createElement('div');
+      tag.className = 'product-tag';
+      tag.innerHTML = inp.value.trim() + ' <span class="remove" onclick="removeTag(this)">×</span>';
+      document.getElementById('productTags').appendChild(tag);
+      inp.value = '';
+    }
+    function removeTag(el) { el.parentElement.remove(); }
+
+    // Score
+    function updateScore(val) {
+      if (val === undefined) {
+        const checked = document.querySelectorAll('.routine-item.checked').length;
+        val = Math.min(100, 40 + checked * 6 + glasses * 2);
+        document.getElementById('scoreSlider').value = val;
+      }
+      document.getElementById('scoreNum').textContent = val;
+      document.getElementById('scoreBar').style.width = val + '%';
+    }
+
+    // Save
+    function saveLog() {
+      const toast = document.getElementById('toast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // Intersection Observer for fade-in
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.style.animationDelay = '0.1s'; e.target.style.opacity = '0'; e.target.style.animation = 'fadeUp 0.7s 0.1s forwards'; } });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.fade-in').forEach(el => obs.observe(el));
+  </script>
+</body>
+</html>
